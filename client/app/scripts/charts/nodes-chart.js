@@ -10,7 +10,7 @@ import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
 import { clickBackground, cacheZoomState } from '../actions/app-actions';
 import { activeLayoutZoomSelector } from '../selectors/nodes-chart-zoom';
-import { stringifiedActiveTopologyOptions } from '../utils/topology-utils';
+import { activeTopologyZoomCacheKeyPath } from '../utils/topology-utils';
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -64,10 +64,9 @@ class NodesChart extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const topologyChanged = nextProps.currentTopologyId !== this.props.currentTopologyId;
-    const optionsChanged = nextProps.activeTopologyOptions !== this.props.activeTopologyOptions;
+    const layoutChanged = nextProps.layoutId !== this.props.layoutId;
 
-    if (topologyChanged || optionsChanged) {
+    if (layoutChanged || nextProps.forceRelayout) {
       this.debouncedCacheZoom.cancel();
       this.zoomRestored = false;
     }
@@ -144,9 +143,9 @@ class NodesChart extends React.Component {
 function mapStateToProps(state) {
   return {
     layoutZoom: activeLayoutZoomSelector(state),
-    activeTopologyOptions: stringifiedActiveTopologyOptions(state),
-    currentTopologyId: state.get('currentTopologyId'),
+    layoutId: JSON.stringify(activeTopologyZoomCacheKeyPath(state)),
     selectedNodeId: state.get('selectedNodeId'),
+    forceRelayout: state.get('forceRelayout'),
   };
 }
 

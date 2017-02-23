@@ -253,9 +253,6 @@ export function toggleGridMode(enabledArgument) {
       enabled
     });
     updateRoute(getState);
-    if (!enabled) {
-      dispatch(clickForceRelayout());
-    }
   };
 }
 

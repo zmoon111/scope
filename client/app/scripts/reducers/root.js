@@ -17,7 +17,7 @@ import {
   addTopologyFullname,
   getDefaultTopology,
   graphExceedsComplexityThresh,
-  stringifiedActiveTopologyOptions,
+  activeTopologyZoomCacheKeyPath,
 } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
@@ -210,9 +210,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CACHE_ZOOM_STATE: {
-      const topologyId = state.get('currentTopologyId');
-      const topologyOptions = stringifiedActiveTopologyOptions(state);
-      return state.setIn(['zoomCache', topologyId, topologyOptions], action.zoomState);
+      return state.setIn(activeTopologyZoomCacheKeyPath(state), action.zoomState);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {
@@ -239,6 +237,10 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_FORCE_RELAYOUT: {
+      if (action.forceRelayout) {
+        // Reset the zoom cache when forcing relayout.
+        state = state.deleteIn(activeTopologyZoomCacheKeyPath(state));
+      }
       return state.set('forceRelayout', action.forceRelayout);
     }
 

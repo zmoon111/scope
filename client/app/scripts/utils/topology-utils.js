@@ -179,6 +179,8 @@ export function graphExceedsComplexityThresh(stats) {
   return (stats.get('node_count') + (2 * stats.get('edge_count'))) > 1000;
 }
 
-export function stringifiedActiveTopologyOptions(state) {
-  return JSON.stringify(getActiveTopologyOptions(state));
+export function activeTopologyZoomCacheKeyPath(state) {
+  const topologyId = state.get('currentTopologyId');
+  const topologyOptions = JSON.stringify(getActiveTopologyOptions(state));
+  return ['zoomCache', topologyId, topologyOptions];
 }
