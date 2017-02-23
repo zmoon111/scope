@@ -12,8 +12,9 @@ import NodesChartElements from './nodes-chart-elements';
 import { getActiveTopologyOptions } from '../utils/topology-utils';
 
 import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
-import { layoutWithSelectedNode } from '../selectors/nodes-chart-focus';
-import { layoutNodesSelector, layoutEdgesSelector } from '../selectors/nodes-chart-layout';
+import {
+  selectedScaleSelector, layoutNodes2Selector, layoutEdges2Selector
+} from '../selectors/nodes-chart-focus';
 
 
 const GRAPH_COMPLEXITY_NODES_TRESHOLD = 100;
@@ -75,6 +76,7 @@ class NodesChart extends React.Component {
     // Reset layout dimensions only when forced (to prevent excessive rendering on resizing).
     state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
+    state.selectedScale = nextProps.selectedScale;
     state.layoutNodes = nextProps.layoutNodes;
     state.layoutEdges = nextProps.layoutEdges;
 
@@ -85,9 +87,9 @@ class NodesChart extends React.Component {
 
     // Finally we update the layout state with the circular
     // subgraph centered around the selected node (if there is one).
-    if (nextProps.selectedNodeId) {
-      assign(state, layoutWithSelectedNode(state, nextProps));
-    }
+    // if (nextProps.selectedNodeId) {
+    //   assign(state, layoutWithSelectedNode(state, nextProps));
+    // }
 
     this.applyZoomState(state);
     this.setState(state);
@@ -162,8 +164,9 @@ class NodesChart extends React.Component {
 function mapStateToProps(state) {
   return {
     topologyZoom: topologyZoomSelector(state),
-    layoutNodes: layoutNodesSelector(state),
-    layoutEdges: layoutEdgesSelector(state),
+    layoutNodes: layoutNodes2Selector(state),
+    layoutEdges: layoutEdges2Selector(state),
+    selectedScale: selectedScaleSelector(state),
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),

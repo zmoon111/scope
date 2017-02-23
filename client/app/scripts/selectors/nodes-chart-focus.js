@@ -3,7 +3,9 @@ import { createSelector } from 'reselect';
 import { scaleThreshold } from 'd3-scale';
 import { fromJS, Set as makeSet } from 'immutable';
 
-import { NODE_BASE_SIZE, DETAILS_PANEL_WIDTH } from '../constants/styles';
+import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
+import { CANVAS_MARGINS, NODE_BASE_SIZE, DETAILS_PANEL_WIDTH } from '../constants/styles';
+import { layoutNodesSelector, layoutEdgesSelector } from './nodes-chart-layout';
 
 
 const circularOffsetAngle = Math.PI / 4;
@@ -18,8 +20,8 @@ const radiusDensity = scaleThreshold()
 // The narrower dimension of the viewport, used for scaling.
 const viewportExpanseSelector = createSelector(
   [
-    state => state.width,
-    state => state.height,
+    state => state.getIn(['viewport', 'width']),
+    state => state.getIn(['viewport', 'height']),
   ],
   (width, height) => Math.min(width, height)
 );
@@ -28,12 +30,12 @@ const viewportExpanseSelector = createSelector(
 // panel is open), used for focusing the selected node.
 const viewportCenterSelector = createSelector(
   [
-    state => state.width,
-    state => state.height,
-    state => state.panTranslateX,
-    state => state.panTranslateY,
-    state => state.zoomScale,
-    (_, props) => props.margins,
+    state => state.getIn(['viewport', 'width']),
+    state => state.getIn(['viewport', 'height']),
+    state => topologyZoomSelector(state).panTranslateX,
+    state => topologyZoomSelector(state).panTranslateY,
+    state => topologyZoomSelector(state).zoomScale,
+    () => CANVAS_MARGINS,
   ],
   (width, height, translateX, translateY, scale, margins) => {
     const viewportHalfWidth = ((width + margins.left) - DETAILS_PANEL_WIDTH) / 2;
@@ -50,8 +52,8 @@ const viewportCenterSelector = createSelector(
 // TODO: Use createMapSelector here instead.
 const selectedNodeNeighborsIdsSelector = createSelector(
   [
-    (_, props) => props.selectedNodeId,
-    (_, props) => props.nodes,
+    state => state.get('selectedNodeId'),
+    state => state.get('nodes'),
   ],
   (selectedNodeId, nodes) => {
     let adjacentNodes = makeSet();
@@ -75,7 +77,7 @@ const selectedNodeNeighborsIdsSelector = createSelector(
 
 const selectedNodesLayoutSettingsSelector = createSelector(
   [
-    state => state.zoomScale,
+    state => topologyZoomSelector(state).zoomScale,
     selectedNodeNeighborsIdsSelector,
     viewportExpanseSelector,
   ],
@@ -103,22 +105,22 @@ const selectedNodesLayoutSettingsSelector = createSelector(
   }
 );
 
-export const layoutWithSelectedNode = createSelector(
+const layoutWithSelectedNodeSelector = createSelector(
   [
-    state => state.layoutNodes,
-    state => state.layoutEdges,
-    (_, props) => props.selectedNodeId,
+    state => state.get('selectedNodeId'),
+    layoutNodesSelector,
+    layoutEdgesSelector,
     viewportCenterSelector,
     selectedNodeNeighborsIdsSelector,
     selectedNodesLayoutSettingsSelector,
   ],
-  (layoutNodes, layoutEdges, selectedNodeId, viewportCenter, neighborsIds, layoutSettings) => {
+  (selectedNodeId, layoutNodes, layoutEdges, viewportCenter, neighborsIds, layoutSettings) => {
+    const { selectedScale, circularRadius, circularInnerAngle } = layoutSettings;
+
     // Do nothing if the layout doesn't contain the selected node anymore.
     if (!layoutNodes.has(selectedNodeId)) {
-      return {};
+      return { layoutNodes, layoutEdges, selectedScale };
     }
-
-    const { selectedScale, circularRadius, circularInnerAngle } = layoutSettings;
 
     // Fix the selected node in the viewport center.
     layoutNodes = layoutNodes.mergeIn([selectedNodeId], viewportCenter);
@@ -154,4 +156,26 @@ export const layoutWithSelectedNode = createSelector(
 
     return { layoutNodes, layoutEdges, selectedScale };
   }
+);
+
+// TODO: Rename those.
+export const layoutNodes2Selector = createSelector(
+  [
+    layoutWithSelectedNodeSelector,
+  ],
+  layout => layout.layoutNodes
+);
+
+export const layoutEdges2Selector = createSelector(
+  [
+    layoutWithSelectedNodeSelector,
+  ],
+  layout => layout.layoutEdges
+);
+
+export const selectedScaleSelector = createSelector(
+  [
+    layoutWithSelectedNodeSelector,
+  ],
+  layout => layout.selectedScale
 );
