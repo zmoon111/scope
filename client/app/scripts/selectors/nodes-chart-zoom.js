@@ -21,7 +21,7 @@ const viewportHeightSelector = createSelector(
 );
 
 // Compute the default zoom settings for the given graph layout.
-export const defaultZoomSelector = createSelector(
+const defaultZoomSelector = createSelector(
   [
     layoutNodesSelector,
     viewportWidthSelector,
@@ -59,12 +59,20 @@ export const defaultZoomSelector = createSelector(
   }
 );
 
+const cachedZoomSelector = createSelector(
+  [
+    state => state.get('zoomCache'),
+    state => state.get('currentTopologyId'),
+  ],
+  (zoomCache, topologyId) => zoomCache.get(topologyId)
+);
+
 // Use the cache to get the last zoom state for the selected topology,
 // otherwise use the default zoom options computed from the graph layout.
-// export const topologyZoomState = createSelector(
-//   [
-//     (state, props) => state.zoomCache[zoomCacheKey(props)],
-//     defaultZoomSelector,
-//   ],
-//   (cachedZoomState, defaultZoomState) => cachedZoomState || defaultZoomState
-// );
+export const topologyZoomSelector = createSelector(
+  [
+    cachedZoomSelector,
+    defaultZoomSelector,
+  ],
+  (cachedZoomState, defaultZoomState) => cachedZoomState || defaultZoomState
+);

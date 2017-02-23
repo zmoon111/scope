@@ -3,6 +3,7 @@ import { zipObject } from 'lodash';
 const ACTION_TYPES = [
   'ADD_QUERY_FILTER',
   'BLUR_SEARCH',
+  'CACHE_ZOOM_STATE',
   'CHANGE_TOPOLOGY_OPTION',
   'CLEAR_CONTROL_ERROR',
   'CLICK_BACKGROUND',

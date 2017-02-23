@@ -352,6 +352,13 @@ export function clickTopology(topologyId) {
   };
 }
 
+export function cacheZoomState(zoomState) {
+  return {
+    type: ActionTypes.CACHE_ZOOM_STATE,
+    zoomState
+  };
+}
+
 export function openWebsocket() {
   return {
     type: ActionTypes.OPEN_WEBSOCKET

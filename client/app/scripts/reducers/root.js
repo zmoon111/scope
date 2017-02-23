@@ -79,7 +79,8 @@ export const initialState = makeMap({
   viewport: makeMap(),
   websocketClosed: false,
   exportingGraph: false,
-  initialNodesLoaded: false
+  initialNodesLoaded: false,
+  zoomCache: makeMap(),
 });
 
 // adds ID field to topology (based on last part of URL path) and save urls in
@@ -205,6 +206,11 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SET_GRID_MODE: {
       return state.setIn(['gridMode'], action.enabled);
+    }
+
+    case ActionTypes.CACHE_ZOOM_STATE: {
+      const topologyId = state.get('currentTopologyId');
+      return state.setIn(['zoomCache', topologyId], action.zoomState);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {

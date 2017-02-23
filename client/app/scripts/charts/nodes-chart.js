@@ -6,12 +6,12 @@ import { Map as makeMap } from 'immutable';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
-import { clickBackground } from '../actions/app-actions';
+import { clickBackground, cacheZoomState } from '../actions/app-actions';
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
-import { getActiveTopologyOptions, zoomCacheKey } from '../utils/topology-utils';
+import { getActiveTopologyOptions } from '../utils/topology-utils';
 
-import { defaultZoomSelector } from '../selectors/nodes-chart-zoom';
+import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
 import { layoutWithSelectedNode } from '../selectors/nodes-chart-focus';
 import { layoutNodesSelector, layoutEdgesSelector } from '../selectors/nodes-chart-layout';
 
@@ -38,14 +38,10 @@ class NodesChart extends React.Component {
       selectedScale: 1,
       height: props.height || 0,
       width: props.width || 0,
-      // TODO: Move zoomCache to global Redux state. Now that we store
-      // it here, it gets reset every time the component gets destroyed.
-      // That happens e.g. when we switch to a grid mode in one topology,
-      // which resets the zoom cache across all topologies, which is bad.
-      zoomCache: {},
     };
 
     this.handleMouseClick = this.handleMouseClick.bind(this);
+    this.cacheZoom = this.cacheZoom.bind(this);
     this.zoomed = this.zoomed.bind(this);
   }
   //
@@ -85,7 +81,7 @@ class NodesChart extends React.Component {
     // Now that we have the graph layout information, we use it to create a default zoom
     // settings for the current topology if we are rendering its layout for the first time, or
     // otherwise we use the cached zoom information from local state for this topology layout.
-    assign(state, state.zoomCache[zoomCacheKey(nextProps)] || nextProps.defaultZoom);
+    assign(state, nextProps.topologyZoom);
 
     // Finally we update the layout state with the circular
     // subgraph centered around the selected node (if there is one).
@@ -96,6 +92,7 @@ class NodesChart extends React.Component {
     this.applyZoomState(state);
     this.setState(state);
   }
+
 
   render() {
     // Not passing transform into child components for perf reasons.
@@ -124,6 +121,11 @@ class NodesChart extends React.Component {
     );
   }
 
+  cacheZoom(state = this.state) {
+    const zoomState = pick(state, ZOOM_CACHE_FIELDS);
+    this.props.cacheZoomState(zoomState);
+  }
+
   handleMouseClick() {
     if (!this.isZooming || this.props.selectedNodeId) {
       this.props.clickBackground();
@@ -134,13 +136,6 @@ class NodesChart extends React.Component {
 
   isTopologyGraphComplex() {
     return this.state.layoutNodes.size > GRAPH_COMPLEXITY_NODES_TRESHOLD;
-  }
-
-  cacheZoomState(state) {
-    const zoomState = pick(state, ZOOM_CACHE_FIELDS);
-    const zoomCache = assign({}, state.zoomCache);
-    zoomCache[zoomCacheKey(this.props)] = zoomState;
-    return { zoomCache };
   }
 
   applyZoomState({ zoomScale, minZoomScale, maxZoomScale, panTranslateX, panTranslateY }) {
@@ -154,15 +149,11 @@ class NodesChart extends React.Component {
     this.isZooming = true;
     // don't pan while node is selected
     if (!this.props.selectedNodeId) {
-      let state = assign({}, this.state, {
+      this.setState({
         panTranslateX: d3Event.transform.x,
         panTranslateY: d3Event.transform.y,
         zoomScale: d3Event.transform.k
       });
-      // Cache the zoom state as soon as it changes as it is cheap, and makes us
-      // be able to skip difficult conditions on when this caching should happen.
-      state = assign(state, this.cacheZoomState(state));
-      this.setState(state);
     }
   }
 }
@@ -170,7 +161,7 @@ class NodesChart extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    defaultZoom: defaultZoomSelector(state),
+    topologyZoom: topologyZoomSelector(state),
     layoutNodes: layoutNodesSelector(state),
     layoutEdges: layoutEdgesSelector(state),
     forceRelayout: state.get('forceRelayout'),
@@ -185,5 +176,5 @@ function mapStateToProps(state) {
 
 export default connect(
   mapStateToProps,
-  { clickBackground }
+  { clickBackground, cacheZoomState }
 )(NodesChart);
