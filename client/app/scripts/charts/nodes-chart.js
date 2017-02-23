@@ -9,7 +9,8 @@ import { zoom, zoomIdentity } from 'd3-zoom';
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
 import { clickBackground, cacheZoomState } from '../actions/app-actions';
-import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
+import { activeLayoutZoomSelector } from '../selectors/nodes-chart-zoom';
+import { stringifiedActiveTopologyOptions } from '../utils/topology-utils';
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -63,7 +64,10 @@ class NodesChart extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.currentTopologyId !== this.props.currentTopologyId) {
+    const topologyChanged = nextProps.currentTopologyId !== this.props.currentTopologyId;
+    const optionsChanged = nextProps.activeTopologyOptions !== this.props.activeTopologyOptions;
+
+    if (topologyChanged || optionsChanged) {
       this.debouncedCacheZoom.cancel();
       this.zoomRestored = false;
     }
@@ -99,8 +103,8 @@ class NodesChart extends React.Component {
   }
 
   restoreZoom(props) {
-    if (!props.topologyZoom.isEmpty()) {
-      const zoomState = props.topologyZoom.toJS();
+    if (!props.layoutZoom.isEmpty()) {
+      const zoomState = props.layoutZoom.toJS();
 
       // Restore the zooming settings
       this.zoom = this.zoom.scaleExtent([zoomState.minZoomScale, zoomState.maxZoomScale]);
@@ -139,7 +143,8 @@ class NodesChart extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    topologyZoom: topologyZoomSelector(state),
+    layoutZoom: activeLayoutZoomSelector(state),
+    activeTopologyOptions: stringifiedActiveTopologyOptions(state),
     currentTopologyId: state.get('currentTopologyId'),
     selectedNodeId: state.get('selectedNodeId'),
   };

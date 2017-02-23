@@ -2,6 +2,7 @@ import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
 import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../constants/styles';
+import { stringifiedActiveTopologyOptions } from '../utils/topology-utils';
 import { layoutNodesSelector } from './nodes-chart-layout';
 
 
@@ -59,19 +60,20 @@ const defaultZoomSelector = createSelector(
   }
 );
 
-const cachedZoomSelector = createSelector(
+const activeLayoutCachedZoomSelector = createSelector(
   [
     state => state.get('zoomCache'),
     state => state.get('currentTopologyId'),
+    state => stringifiedActiveTopologyOptions(state),
   ],
-  (zoomCache, topologyId) => zoomCache.get(topologyId)
+  (zoomCache, topologyId, topologyOptions) => zoomCache.getIn([topologyId, topologyOptions])
 );
 
 // Use the cache to get the last zoom state for the selected topology,
 // otherwise use the default zoom options computed from the graph layout.
-export const topologyZoomSelector = createSelector(
+export const activeLayoutZoomSelector = createSelector(
   [
-    cachedZoomSelector,
+    activeLayoutCachedZoomSelector,
     defaultZoomSelector,
   ],
   (cachedZoomState, defaultZoomState) => makeMap(cachedZoomState || defaultZoomState)

@@ -16,7 +16,8 @@ import {
   filterHiddenTopologies,
   addTopologyFullname,
   getDefaultTopology,
-  graphExceedsComplexityThresh
+  graphExceedsComplexityThresh,
+  stringifiedActiveTopologyOptions,
 } from '../utils/topology-utils';
 
 const log = debug('scope:app-store');
@@ -37,6 +38,7 @@ export const initialState = makeMap({
   currentTopology: null,
   currentTopologyId: null,
   errorUrl: null,
+  exportingGraph: false,
   forceRelayout: false,
   gridMode: false,
   gridSortedBy: null,
@@ -45,6 +47,7 @@ export const initialState = makeMap({
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
+  initialNodesLoaded: false,
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
   networkNodes: makeMap(),
@@ -78,8 +81,6 @@ export const initialState = makeMap({
   versionUpdate: null,
   viewport: makeMap(),
   websocketClosed: false,
-  exportingGraph: false,
-  initialNodesLoaded: false,
   zoomCache: makeMap(),
 });
 
@@ -210,7 +211,8 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.CACHE_ZOOM_STATE: {
       const topologyId = state.get('currentTopologyId');
-      return state.setIn(['zoomCache', topologyId], action.zoomState);
+      const topologyOptions = stringifiedActiveTopologyOptions(state);
+      return state.setIn(['zoomCache', topologyId, topologyOptions], action.zoomState);
     }
 
     case ActionTypes.CLEAR_CONTROL_ERROR: {

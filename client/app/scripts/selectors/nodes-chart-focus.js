@@ -3,9 +3,9 @@ import { createSelector } from 'reselect';
 import { scaleThreshold } from 'd3-scale';
 import { fromJS, Set as makeSet } from 'immutable';
 
-import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
 import { CANVAS_MARGINS, NODE_BASE_SIZE, DETAILS_PANEL_WIDTH } from '../constants/styles';
 import { layoutNodesSelector, layoutEdgesSelector } from './nodes-chart-layout';
+import { activeLayoutZoomSelector } from './nodes-chart-zoom';
 
 
 const circularOffsetAngle = Math.PI / 4;
@@ -32,9 +32,9 @@ const viewportCenterSelector = createSelector(
   [
     state => state.getIn(['viewport', 'width']),
     state => state.getIn(['viewport', 'height']),
-    state => topologyZoomSelector(state).get('panTranslateX'),
-    state => topologyZoomSelector(state).get('panTranslateY'),
-    state => topologyZoomSelector(state).get('zoomScale'),
+    state => activeLayoutZoomSelector(state).get('panTranslateX'),
+    state => activeLayoutZoomSelector(state).get('panTranslateY'),
+    state => activeLayoutZoomSelector(state).get('zoomScale'),
     () => CANVAS_MARGINS,
   ],
   (width, height, translateX, translateY, scale, margins) => {
@@ -77,7 +77,7 @@ const selectedNodeNeighborsIdsSelector = createSelector(
 
 const selectedNodesLayoutSettingsSelector = createSelector(
   [
-    state => topologyZoomSelector(state).get('zoomScale'),
+    state => activeLayoutZoomSelector(state).get('zoomScale'),
     selectedNodeNeighborsIdsSelector,
     viewportExpanseSelector,
   ],
