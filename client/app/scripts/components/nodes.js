@@ -9,11 +9,10 @@ import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import { setViewportDimensions } from '../actions/app-actions';
-import { CANVAS_MARGINS } from '../constants/styles';
+
 
 const navbarHeight = 194;
 const marginTop = 0;
-
 
 const EmptyTopologyError = show => (
   <NodesError faIconClass="fa-circle-thin" hidden={!show}>
@@ -60,9 +59,7 @@ class Nodes extends React.Component {
         </DelayedShow>
         {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
-        {gridMode ?
-          <NodesGrid margins={CANVAS_MARGINS} /> :
-          <NodesChart margins={CANVAS_MARGINS} />}
+        {gridMode ? <NodesGrid /> : <NodesChart />}
       </div>
     );
   }

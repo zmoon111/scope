@@ -1,8 +1,8 @@
 import { createSelector } from 'reselect';
+import { Map as makeMap } from 'immutable';
 
 import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../constants/styles';
 import { layoutNodesSelector } from './nodes-chart-layout';
-// import { zoomCacheKey } from '../utils/topology-utils';
 
 
 const viewportWidthSelector = createSelector(
@@ -74,5 +74,5 @@ export const topologyZoomSelector = createSelector(
     cachedZoomSelector,
     defaultZoomSelector,
   ],
-  (cachedZoomState, defaultZoomState) => cachedZoomState || defaultZoomState
+  (cachedZoomState, defaultZoomState) => makeMap(cachedZoomState || defaultZoomState)
 );

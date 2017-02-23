@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { assign, pick } from 'lodash';
+import { debounce, pick } from 'lodash';
+import { fromJS } from 'immutable';
 
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
@@ -12,10 +13,12 @@ import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
 
 
 const ZOOM_CACHE_FIELDS = [
-  'panTranslateX', 'panTranslateY',
-  'zoomScale', 'minZoomScale', 'maxZoomScale'
+  'zoomScale',
+  'minZoomScale',
+  'maxZoomScale',
+  'panTranslateX',
+  'panTranslateY',
 ];
-
 
 class NodesChart extends React.Component {
   constructor(props, context) {
@@ -32,9 +35,13 @@ class NodesChart extends React.Component {
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.cacheZoom = this.cacheZoom.bind(this);
     this.zoomed = this.zoomed.bind(this);
+
+    this.debouncedCacheZoom = debounce(this.cacheZoom, 1000);
   }
 
   componentDidMount() {
+    this.restoredZoom = false;
+
     // distinguish pan/zoom from click
     this.isZooming = false;
     this.zoom = zoom().on('zoom', this.zoomed);
@@ -54,15 +61,18 @@ class NodesChart extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    // Don't modify the original state, as we only want to call setState once at the end.
-    const state = assign({}, this.state);
-    assign(state, nextProps.topologyZoom);
+    if (nextProps.currentTopologyId !== this.props.currentTopologyId) {
+      this.restoredZoom = false;
+    }
 
-    console.log('Will receive props');
-    this.applyZoomState(state);
-    this.setState(state);
+    if (!this.restoredZoom) {
+      const zoomState = nextProps.topologyZoom;
+      if (!zoomState.isEmpty()) {
+        this.applyZoomState(zoomState.toJS());
+        this.restoredZoom = true;
+      }
+    }
   }
-
 
   render() {
     // Not passing transform into child components for perf reasons.
@@ -84,9 +94,9 @@ class NodesChart extends React.Component {
     );
   }
 
-  cacheZoom(state = this.state) {
-    const zoomState = pick(state, ZOOM_CACHE_FIELDS);
-    this.props.cacheZoomState(zoomState);
+  cacheZoom() {
+    const zoomState = pick(this.state, ZOOM_CACHE_FIELDS);
+    this.props.cacheZoomState(fromJS(zoomState));
   }
 
   handleMouseClick() {
@@ -97,11 +107,12 @@ class NodesChart extends React.Component {
     }
   }
 
-  applyZoomState({ zoomScale, minZoomScale, maxZoomScale, panTranslateX, panTranslateY }) {
-    this.zoom = this.zoom.scaleExtent([minZoomScale, maxZoomScale]);
+  applyZoomState(zoomState) {
+    this.zoom = this.zoom.scaleExtent([zoomState.minZoomScale, zoomState.maxZoomScale]);
     this.svg.call(this.zoom.transform, zoomIdentity
-      .translate(panTranslateX, panTranslateY)
-      .scale(zoomScale));
+      .translate(zoomState.panTranslateX, zoomState.panTranslateY)
+      .scale(zoomState.zoomScale));
+    this.setState(zoomState);
   }
 
   zoomed() {
@@ -113,6 +124,7 @@ class NodesChart extends React.Component {
         panTranslateY: d3Event.transform.y,
         zoomScale: d3Event.transform.k
       });
+      this.debouncedCacheZoom();
     }
   }
 }
@@ -121,6 +133,8 @@ class NodesChart extends React.Component {
 function mapStateToProps(state) {
   return {
     topologyZoom: topologyZoomSelector(state),
+    currentTopologyId: state.get('currentTopologyId'),
+    selectedNodeId: state.get('selectedNodeId'),
   };
 }
 
