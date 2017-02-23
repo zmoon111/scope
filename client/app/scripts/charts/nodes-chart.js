@@ -11,9 +11,9 @@ import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
 import { getActiveTopologyOptions, zoomCacheKey } from '../utils/topology-utils';
 
-import { topologyZoomState } from '../selectors/nodes-chart-zoom';
+import { defaultZoomSelector } from '../selectors/nodes-chart-zoom';
 import { layoutWithSelectedNode } from '../selectors/nodes-chart-focus';
-import { graphLayout } from '../selectors/nodes-chart-layout';
+import { layoutNodesSelector, layoutEdgesSelector } from '../selectors/nodes-chart-layout';
 
 
 const GRAPH_COMPLEXITY_NODES_TRESHOLD = 100;
@@ -85,7 +85,7 @@ class NodesChart extends React.Component {
     // Now that we have the graph layout information, we use it to create a default zoom
     // settings for the current topology if we are rendering its layout for the first time, or
     // otherwise we use the cached zoom information from local state for this topology layout.
-    assign(state, topologyZoomState(state, nextProps));
+    assign(state, state.zoomCache[zoomCacheKey(nextProps)] || nextProps.defaultZoom);
 
     // Finally we update the layout state with the circular
     // subgraph centered around the selected node (if there is one).
@@ -170,8 +170,9 @@ class NodesChart extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    layoutNodes: graphLayout(state).layoutNodes,
-    layoutEdges: graphLayout(state).layoutEdges,
+    defaultZoom: defaultZoomSelector(state),
+    layoutNodes: layoutNodesSelector(state),
+    layoutEdges: layoutEdgesSelector(state),
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),

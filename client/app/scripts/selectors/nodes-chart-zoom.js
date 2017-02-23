@@ -1,34 +1,34 @@
 import { createSelector } from 'reselect';
 
-import { NODE_BASE_SIZE } from '../constants/styles';
-import { zoomCacheKey } from '../utils/topology-utils';
+import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../constants/styles';
+import { layoutNodesSelector } from './nodes-chart-layout';
+// import { zoomCacheKey } from '../utils/topology-utils';
 
-// TODO: Make all the selectors below pure (so that they only depend on the global state).
 
 const viewportWidthSelector = createSelector(
   [
-    state => state.width,
-    (_, props) => props.margins,
+    state => state.getIn(['viewport', 'width']),
+    () => CANVAS_MARGINS,
   ],
   (width, margins) => width - margins.left - margins.right
 );
 const viewportHeightSelector = createSelector(
   [
-    state => state.height,
-    (_, props) => props.margins,
+    state => state.getIn(['viewport', 'height']),
+    () => CANVAS_MARGINS,
   ],
   (height, margins) => height - margins.top
 );
 
 // Compute the default zoom settings for the given graph layout.
-const defaultZoomSelector = createSelector(
+export const defaultZoomSelector = createSelector(
   [
-    state => state.layoutNodes,
-    (_, props) => props.margins,
+    layoutNodesSelector,
     viewportWidthSelector,
     viewportHeightSelector,
+    () => CANVAS_MARGINS,
   ],
-  (layoutNodes, margins, width, height) => {
+  (layoutNodes, width, height, margins) => {
     if (layoutNodes.size === 0) {
       return {};
     }
@@ -61,10 +61,10 @@ const defaultZoomSelector = createSelector(
 
 // Use the cache to get the last zoom state for the selected topology,
 // otherwise use the default zoom options computed from the graph layout.
-export const topologyZoomState = createSelector(
-  [
-    (state, props) => state.zoomCache[zoomCacheKey(props)],
-    defaultZoomSelector,
-  ],
-  (cachedZoomState, defaultZoomState) => cachedZoomState || defaultZoomState
-);
+// export const topologyZoomState = createSelector(
+//   [
+//     (state, props) => state.zoomCache[zoomCacheKey(props)],
+//     defaultZoomSelector,
+//   ],
+//   (cachedZoomState, defaultZoomState) => cachedZoomState || defaultZoomState
+// );

@@ -21,7 +21,7 @@ const layoutOptionsSelector = createStructuredSelector({
   topologyOptions: state => getActiveTopologyOptions(state),
 });
 
-export const graphLayout = createSelector(
+const graphLayoutSelector = createSelector(
   [
     // TODO: Instead of sending the nodes with all the information (metrics, metadata, etc...)
     // to the layout engine, it would suffice to forward it just the nodes adjacencies map, which
@@ -43,10 +43,7 @@ export const graphLayout = createSelector(
   (nodes, options) => {
     // If the graph is empty, skip computing the layout.
     if (nodes.size === 0) {
-      return {
-        layoutNodes: makeMap(),
-        layoutEdges: makeMap(),
-      };
+      return {};
     }
 
     const edges = initEdgesFromNodes(nodes);
@@ -57,10 +54,21 @@ export const graphLayout = createSelector(
     // computed property, but this is still useful.
     log(`graph layout calculation took ${timedLayouter.time}ms`);
 
-    return {
-      // NOTE: This might be a good place to add (some of) nodes/edges decorators.
-      layoutNodes: graph.nodes,
-      layoutEdges: collapseMultiEdges(graph.edges),
-    };
+    return graph;
   }
+);
+
+export const layoutNodesSelector = createSelector(
+  [
+    graphLayoutSelector,
+  ],
+  // NOTE: This might be a good place to add (some of) nodes/edges decorators.
+  graph => graph.nodes || makeMap()
+);
+
+export const layoutEdgesSelector = createSelector(
+  [
+    graphLayoutSelector,
+  ],
+  graph => collapseMultiEdges(graph.edges || makeMap())
 );
