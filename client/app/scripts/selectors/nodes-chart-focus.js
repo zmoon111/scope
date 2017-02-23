@@ -6,6 +6,7 @@ import { fromJS, Set as makeSet } from 'immutable';
 import { CANVAS_MARGINS, NODE_BASE_SIZE, DETAILS_PANEL_WIDTH } from '../constants/styles';
 import { layoutNodesSelector, layoutEdgesSelector } from './nodes-chart-layout';
 import { activeLayoutZoomSelector } from './nodes-chart-zoom';
+import { viewportExpanseSelector } from './viewport';
 
 
 const circularOffsetAngle = Math.PI / 4;
@@ -15,16 +16,6 @@ const radiusDensity = scaleThreshold()
   .domain([3, 6])
   .range([2.5, 3.5, 3]);
 
-// TODO: Make all the selectors below pure (so that they only depend on the global state).
-
-// The narrower dimension of the viewport, used for scaling.
-const viewportExpanseSelector = createSelector(
-  [
-    state => state.getIn(['viewport', 'width']),
-    state => state.getIn(['viewport', 'height']),
-  ],
-  (width, height) => Math.min(width, height)
-);
 
 // Coordinates of the viewport center (when the details
 // panel is open), used for focusing the selected node.
@@ -35,11 +26,10 @@ const viewportCenterSelector = createSelector(
     state => activeLayoutZoomSelector(state).get('panTranslateX'),
     state => activeLayoutZoomSelector(state).get('panTranslateY'),
     state => activeLayoutZoomSelector(state).get('zoomScale'),
-    () => CANVAS_MARGINS,
   ],
-  (width, height, translateX, translateY, scale, margins) => {
-    const viewportHalfWidth = ((width + margins.left) - DETAILS_PANEL_WIDTH) / 2;
-    const viewportHalfHeight = (height + margins.top) / 2;
+  (width, height, translateX, translateY, scale) => {
+    const viewportHalfWidth = ((width + CANVAS_MARGINS.left) - DETAILS_PANEL_WIDTH) / 2;
+    const viewportHalfHeight = (height + CANVAS_MARGINS.top) / 2;
     return {
       x: (-translateX + viewportHalfWidth) / scale,
       y: (-translateY + viewportHalfHeight) / scale,

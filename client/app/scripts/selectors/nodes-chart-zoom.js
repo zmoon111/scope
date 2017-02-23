@@ -3,23 +3,9 @@ import { Map as makeMap } from 'immutable';
 
 import { CANVAS_MARGINS, NODE_BASE_SIZE } from '../constants/styles';
 import { stringifiedActiveTopologyOptions } from '../utils/topology-utils';
+import { viewportWidthSelector, viewportHeightSelector } from './viewport';
 import { layoutNodesSelector } from './nodes-chart-layout';
 
-
-const viewportWidthSelector = createSelector(
-  [
-    state => state.getIn(['viewport', 'width']),
-    () => CANVAS_MARGINS,
-  ],
-  (width, margins) => width - margins.left - margins.right
-);
-const viewportHeightSelector = createSelector(
-  [
-    state => state.getIn(['viewport', 'height']),
-    () => CANVAS_MARGINS,
-  ],
-  (height, margins) => height - margins.top
-);
 
 // Compute the default zoom settings for the given graph layout.
 const defaultZoomSelector = createSelector(
@@ -27,9 +13,8 @@ const defaultZoomSelector = createSelector(
     layoutNodesSelector,
     viewportWidthSelector,
     viewportHeightSelector,
-    () => CANVAS_MARGINS,
   ],
-  (layoutNodes, width, height, margins) => {
+  (layoutNodes, width, height) => {
     if (layoutNodes.size === 0) {
       return {};
     }
@@ -53,8 +38,8 @@ const defaultZoomSelector = createSelector(
     const minZoomScale = zoomScale / 5;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
-    const panTranslateX = ((width - ((xMax + xMin) * zoomScale)) / 2) + margins.left;
-    const panTranslateY = ((height - ((yMax + yMin) * zoomScale)) / 2) + margins.top;
+    const panTranslateX = ((width - ((xMax + xMin) * zoomScale)) / 2) + CANVAS_MARGINS.left;
+    const panTranslateY = ((height - ((yMax + yMin) * zoomScale)) / 2) + CANVAS_MARGINS.top;
 
     return { zoomScale, minZoomScale, maxZoomScale, panTranslateX, panTranslateY };
   }
