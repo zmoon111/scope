@@ -10,6 +10,7 @@ import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
 import { clickBackground, cacheZoomState } from '../actions/app-actions';
 import { topologyZoomSelector } from '../selectors/nodes-chart-zoom';
+import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const ZOOM_CACHE_FIELDS = [
@@ -32,22 +33,21 @@ class NodesChart extends React.Component {
       panTranslateY: 0,
     };
 
+    this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
     this.handleMouseClick = this.handleMouseClick.bind(this);
-    this.cacheZoom = this.cacheZoom.bind(this);
     this.zoomed = this.zoomed.bind(this);
-
-    this.debouncedCacheZoom = debounce(this.cacheZoom, 1000);
   }
 
   componentDidMount() {
-    this.restoredZoom = false;
-
     // distinguish pan/zoom from click
     this.isZooming = false;
+    this.zoomRestored = false;
     this.zoom = zoom().on('zoom', this.zoomed);
 
     this.svg = select('.nodes-chart svg');
     this.svg.call(this.zoom);
+
+    this.restoreZoom(this.props);
   }
 
   componentWillUnmount() {
@@ -58,19 +58,18 @@ class NodesChart extends React.Component {
       .on('onmousewheel', null)
       .on('dblclick.zoom', null)
       .on('touchstart.zoom', null);
+
+    this.debouncedCacheZoom.cancel();
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.currentTopologyId !== this.props.currentTopologyId) {
-      this.restoredZoom = false;
+      this.debouncedCacheZoom.cancel();
+      this.zoomRestored = false;
     }
 
-    if (!this.restoredZoom) {
-      const zoomState = nextProps.topologyZoom;
-      if (!zoomState.isEmpty()) {
-        this.applyZoomState(zoomState.toJS());
-        this.restoredZoom = true;
-      }
+    if (!this.zoomRestored) {
+      this.restoreZoom(nextProps);
     }
   }
 
@@ -99,20 +98,28 @@ class NodesChart extends React.Component {
     this.props.cacheZoomState(fromJS(zoomState));
   }
 
+  restoreZoom(props) {
+    if (!props.topologyZoom.isEmpty()) {
+      const zoomState = props.topologyZoom.toJS();
+
+      // Restore the zooming settings
+      this.zoom = this.zoom.scaleExtent([zoomState.minZoomScale, zoomState.maxZoomScale]);
+      this.svg.call(this.zoom.transform, zoomIdentity
+        .translate(zoomState.panTranslateX, zoomState.panTranslateY)
+        .scale(zoomState.zoomScale));
+
+      // Update the state variables
+      this.setState(zoomState);
+      this.zoomRestored = true;
+    }
+  }
+
   handleMouseClick() {
     if (!this.isZooming || this.props.selectedNodeId) {
       this.props.clickBackground();
     } else {
       this.isZooming = false;
     }
-  }
-
-  applyZoomState(zoomState) {
-    this.zoom = this.zoom.scaleExtent([zoomState.minZoomScale, zoomState.maxZoomScale]);
-    this.svg.call(this.zoom.transform, zoomIdentity
-      .translate(zoomState.panTranslateX, zoomState.panTranslateY)
-      .scale(zoomState.zoomScale));
-    this.setState(zoomState);
   }
 
   zoomed() {

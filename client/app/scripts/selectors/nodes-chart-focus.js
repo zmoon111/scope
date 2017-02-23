@@ -32,9 +32,9 @@ const viewportCenterSelector = createSelector(
   [
     state => state.getIn(['viewport', 'width']),
     state => state.getIn(['viewport', 'height']),
-    state => topologyZoomSelector(state).panTranslateX,
-    state => topologyZoomSelector(state).panTranslateY,
-    state => topologyZoomSelector(state).zoomScale,
+    state => topologyZoomSelector(state).get('panTranslateX'),
+    state => topologyZoomSelector(state).get('panTranslateY'),
+    state => topologyZoomSelector(state).get('zoomScale'),
     () => CANVAS_MARGINS,
   ],
   (width, height, translateX, translateY, scale, margins) => {
@@ -77,7 +77,7 @@ const selectedNodeNeighborsIdsSelector = createSelector(
 
 const selectedNodesLayoutSettingsSelector = createSelector(
   [
-    state => topologyZoomSelector(state).zoomScale,
+    state => topologyZoomSelector(state).get('zoomScale'),
     selectedNodeNeighborsIdsSelector,
     viewportExpanseSelector,
   ],
