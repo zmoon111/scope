@@ -76,6 +76,7 @@ export const initialState = makeMap({
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
+  viewport: makeMap(),
   websocketClosed: false,
   exportingGraph: false,
   initialNodesLoaded: false
@@ -182,6 +183,13 @@ export function rootReducer(state = initialState, action) {
         );
       }
       return state;
+    }
+
+    case ActionTypes.SET_VIEWPORT_DIMENSIONS: {
+      return state.mergeIn(['viewport'], {
+        width: action.width,
+        height: action.height,
+      });
     }
 
     case ActionTypes.SET_EXPORTING_GRAPH: {

@@ -151,7 +151,8 @@ function mapStateToProps(state) {
     currentTopologyId: state.get('currentTopologyId'),
     searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
-    selectedNodeId: state.get('selectedNodeId')
+    selectedNodeId: state.get('selectedNodeId'),
+    height: state.getIn(['viewport', 'height']),
   };
 }
 

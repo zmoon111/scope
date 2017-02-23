@@ -3,21 +3,22 @@ import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 import timely from 'timely';
 
+import { CANVAS_MARGINS } from '../constants/styles';
+import { getActiveTopologyOptions } from '../utils/topology-utils';
 import { initEdgesFromNodes, collapseMultiEdges } from '../utils/layouter-utils';
+import { shownNodesSelector } from './node-filters';
 import { doLayout } from '../charts/nodes-layout';
 
 const log = debug('scope:nodes-chart');
 
 
-// TODO: Make all the selectors below pure (so that they only depend on the global state).
-
 const layoutOptionsSelector = createStructuredSelector({
-  width: state => state.width,
-  height: state => state.height,
-  margins: (_, props) => props.margins,
-  forceRelayout: (_, props) => props.forceRelayout,
-  topologyId: (_, props) => props.topologyId,
-  topologyOptions: (_, props) => props.topologyOptions,
+  margins: () => CANVAS_MARGINS,
+  width: state => state.getIn(['viewport', 'width']),
+  height: state => state.getIn(['viewport', 'height']),
+  forceRelayout: state => state.get('forceRelayout'),
+  topologyId: state => state.get('currentTopologyId'),
+  topologyOptions: state => getActiveTopologyOptions(state),
 });
 
 export const graphLayout = createSelector(
@@ -36,7 +37,7 @@ export const graphLayout = createSelector(
     // edges here as the adjacencies data is enough to reconstruct them in the layout engine (this
     // might enable us to simplify the caching system there since we really only need to cache
     // the adjacencies map in that case and not nodes and edges).
-    (_, props) => props.nodes,
+    shownNodesSelector,
     layoutOptionsSelector,
   ],
   (nodes, options) => {

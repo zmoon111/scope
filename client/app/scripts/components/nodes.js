@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { debounce } from 'lodash';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
@@ -7,6 +8,7 @@ import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
+import { setViewportDimensions } from '../actions/app-actions';
 import { CANVAS_MARGINS } from '../constants/styles';
 
 const navbarHeight = 194;
@@ -30,12 +32,10 @@ const EmptyTopologyError = show => (
 class Nodes extends React.Component {
   constructor(props, context) {
     super(props, context);
-    this.handleResize = this.handleResize.bind(this);
 
-    this.state = {
-      width: window.innerWidth,
-      height: window.innerHeight - navbarHeight - marginTop,
-    };
+    this.setDimensions = this.setDimensions.bind(this);
+    this.handleResize = debounce(this.setDimensions, 200);
+    this.setDimensions();
   }
 
   componentDidMount() {
@@ -61,21 +61,16 @@ class Nodes extends React.Component {
         {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
         {gridMode ?
-          <NodesGrid {...this.state} nodeSize="24" margins={CANVAS_MARGINS} /> :
-          <NodesChart {...this.state} margins={CANVAS_MARGINS} />}
+          <NodesGrid margins={CANVAS_MARGINS} /> :
+          <NodesChart margins={CANVAS_MARGINS} />}
       </div>
     );
-  }
-
-  handleResize() {
-    this.setDimensions();
   }
 
   setDimensions() {
     const width = window.innerWidth;
     const height = window.innerHeight - navbarHeight - marginTop;
-
-    this.setState({height, width});
+    this.props.setViewportDimensions(width, height);
   }
 }
 
@@ -93,5 +88,6 @@ function mapStateToProps(state) {
 
 
 export default connect(
-  mapStateToProps
+  mapStateToProps,
+  { setViewportDimensions }
 )(Nodes);

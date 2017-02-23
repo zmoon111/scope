@@ -6,7 +6,6 @@ import { Map as makeMap } from 'immutable';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
-import { shownNodesSelector } from '../selectors/node-filters';
 import { clickBackground } from '../actions/app-actions';
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
@@ -49,10 +48,10 @@ class NodesChart extends React.Component {
     this.handleMouseClick = this.handleMouseClick.bind(this);
     this.zoomed = this.zoomed.bind(this);
   }
-
-  componentWillMount() {
-    this.setState(graphLayout(this.state, this.props));
-  }
+  //
+  // componentWillMount() {
+  //   this.setState(graphLayout(this.state, this.props));
+  // }
 
   componentDidMount() {
     // distinguish pan/zoom from click
@@ -80,9 +79,8 @@ class NodesChart extends React.Component {
     // Reset layout dimensions only when forced (to prevent excessive rendering on resizing).
     state.height = nextProps.forceRelayout ? nextProps.height : (state.height || nextProps.height);
     state.width = nextProps.forceRelayout ? nextProps.width : (state.width || nextProps.width);
-
-    // Update the state with memoized graph layout information based on props nodes and edges.
-    assign(state, graphLayout(state, nextProps));
+    state.layoutNodes = nextProps.layoutNodes;
+    state.layoutEdges = nextProps.layoutEdges;
 
     // Now that we have the graph layout information, we use it to create a default zoom
     // settings for the current topology if we are rendering its layout for the first time, or
@@ -172,11 +170,14 @@ class NodesChart extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    nodes: shownNodesSelector(state),
+    layoutNodes: graphLayout(state).layoutNodes,
+    layoutEdges: graphLayout(state).layoutEdges,
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),
     topologyOptions: getActiveTopologyOptions(state),
+    width: state.getIn(['viewport', 'width']),
+    height: state.getIn(['viewport', 'height']),
   };
 }
 
