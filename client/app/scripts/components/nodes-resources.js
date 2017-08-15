@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import ZoomableCanvas from './zoomable-canvas';
+import ZoomableView from './zoomable-view';
 import NodesResourcesLayer from './nodes-resources/node-resources-layer';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import {
@@ -38,13 +38,13 @@ class NodesResources extends React.Component {
   render() {
     return (
       <div className="nodes-resources">
-        <ZoomableCanvas
+        <ZoomableView
           onClick={this.handleMouseClick}
           bounded forwardTransform fixVertical
           zoomLimitsSelector={resourcesZoomLimitsSelector}
           zoomStateSelector={resourcesZoomStateSelector}>
           {transform => this.renderLayers(transform)}
-        </ZoomableCanvas>
+        </ZoomableView>
       </div>
     );
   }

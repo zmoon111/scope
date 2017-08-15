@@ -59,7 +59,7 @@ export const graphDefaultZoomSelector = createSelector(
 );
 
 // NOTE: This constant is made into a selector to fit
-// props requirements for <ZoomableCanvas /> component.
+// props requirements for <ZoomableView /> component.
 export const graphZoomLimitsSelector = createSelector(
   [], () => makeMap({ minScale: MIN_SCALE, maxScale: MAX_SCALE })
 );
